@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from datetime import datetime, date, timedelta
 from werkzeug.utils import secure_filename
+from dotenv import load_dotenv
 from app.finder import FashionFinder
 from functools import wraps
 #import from app.database import DatabaseInitializer
@@ -28,6 +29,9 @@ from sqlalchemy import text
 from datetime import datetime, date
 from werkzeug.utils import secure_filename
 from app.globals import season as global_season
+
+dotenv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+load_dotenv(dotenv_path)
 
 # Directory to save the images
 PROFILE_PIC_FOLDER = 'app/static/uploads/profile/'
