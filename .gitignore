@@ -1,0 +1,8 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Local virtual environment and runtime data
+.venv/
+instance/
+app/static/uploads/virtual_try_on/

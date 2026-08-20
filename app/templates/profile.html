@@ -144,14 +144,15 @@
             </a>
           </li>
 
-          <li class="social-item">
-            <a href="{{ url_for('logout') }}" class="social-link">
-              <ion-icon name="log-out-outline"></ion-icon>
-            </a>
-          </li>
-          
-
         </ul>
+
+        <div class="separator"></div>
+
+        <div style="text-align: center; padding: 10px 0;">
+          <a href="{{ url_for('logout') }}" style="display: inline-block; background-color: #e74c3c; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: 600; cursor: pointer;">
+            <ion-icon name="log-out-outline" style="margin-right: 5px;"></ion-icon> Logout
+          </a>
+        </div>
 
       </div>
 

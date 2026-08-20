@@ -7,7 +7,28 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+        }
+        .header h3 {
+            margin: 0;
+            color: #333;
+        }
+        .header a {
+            background-color: #e74c3c;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 600;
         }
         .status {
             padding: 20px;
@@ -26,6 +47,12 @@
     </style>
 </head>
 <body>
+    <div class="header">
+        <h3>Processing Your Recommendations</h3>
+        {% if 'user' in session %}
+        <a href="{{ url_for('logout') }}">Logout</a>
+        {% endif %}
+    </div>
 
     <div class="status">
         <h2>Processing Your Recommendations...</h2>

@@ -1,17 +1,20 @@
 from flask import Flask, render_template, current_app, request, jsonify, redirect, url_for, session, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from werkzeug.utils import secure_filename
 from app.finder import FashionFinder
-from app.database import DatabaseInitializer
-from ai_engine.fashion_recommender import recommend_fashion
-from ai_engine.virtual_try_on import run_virtual_try_on
-from ai_engine.age_gender_skinTone import process_fashion_recommendation
+from functools import wraps
+#import from app.database import DatabaseInitializer
+#from ai_engine.fashion_recommender import recommend_fashion
+#from ai_engine.virtual_try_on import run_virtual_try_on
+#from ai_engine.age_gender_skinTone import process_fashion_recommendation
 #from celery_setup import celery
-import pymysql
 import os
-import google.generativeai as ai
+try:
+    import google.generativeai as ai
+except ImportError:
+    ai = None
 import logging
 import atexit
 import time
@@ -19,10 +22,12 @@ import json
 import asyncio
 from threading import Thread
 import requests
-from app.weather_based.recommend_cli import weather_based_recommend
-from app.image_based.cli_recommender import rec
+from flask import Flask, render_template, current_app, request, jsonify, redirect, url_for, session, send_from_directory
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
+from datetime import datetime, date
+from werkzeug.utils import secure_filename
 from app.globals import season as global_season
-from app.occasion.app import recommend
 
 # Directory to save the images
 PROFILE_PIC_FOLDER = 'app/static/uploads/profile/'
@@ -31,35 +36,89 @@ VIRTUAL_TRY_ON_IMG_FOLDER = os.path.join('app/static/uploads/virtual_try_on/')
 
 os.makedirs(PROFILE_PIC_FOLDER, exist_ok=True)
 os.makedirs(WARDROBE_IMG_FOLDER, exist_ok=True)
+os.makedirs(VIRTUAL_TRY_ON_IMG_FOLDER, exist_ok=True)
 
 os.environ["GRPC_VERBOSITY"] = "NONE"
 os.environ["GRPC_LOG_SEVERITY_LEVEL"] = "ERROR"
 logging.getLogger('google.generativeai').setLevel(logging.CRITICAL)
 logging.getLogger('grpc').setLevel(logging.CRITICAL)
 
-API_KEY = os.getenv('G_API_KEY') # Replace with your API key
-
-if API_KEY is None:
-    raise ValueError("API_KEY environment variable is not set!")
-
-ai.configure(api_key=API_KEY)
-
-# Create a new model
-model = ai.GenerativeModel("gemini-1.5-pro-latest")
-chat = model.start_chat()
-
-pymysql.install_as_MySQLdb()  # This will make PyMySQL work as MySQLdb
+API_KEY = os.getenv('G_API_KEY')
+chat = None
+if ai is not None and API_KEY:
+    try:
+        ai.configure(api_key=API_KEY)
+        model = ai.GenerativeModel("gemini-1.5-pro-latest")
+        chat = model.start_chat()
+    except Exception as e:
+        logging.warning(f"Could not configure Gemini API: {e}")
+else:
+    logging.warning("G_API_KEY and/or google-generativeai package is not available; Gemini chat will run in fallback mode.")
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'manojrajgopal'
-
-# Configuring the database connection
-db_initializer = DatabaseInitializer()
-db_initializer.initialize_database()
-
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://username:password@localhost/fashion'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fashion.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Session configuration for persistent login
+app.config['PERMANENT_SESSION_LIFETIME'] = 365 * 24 * 3600  # 1 year
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
 db = SQLAlchemy(app)
+
+def initialize_local_database():
+    with app.app_context():
+        db.session.execute(text("PRAGMA foreign_keys = ON"))
+        db.session.execute(text("""
+            CREATE TABLE IF NOT EXISTS login (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                username TEXT UNIQUE NOT NULL,
+                phone TEXT,
+                email TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL
+            )
+        """))
+        db.session.execute(text("""
+            CREATE TABLE IF NOT EXISTS user_information (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                profile_pic TEXT,
+                gender TEXT,
+                date_of_birth DATE,
+                body_type TEXT,
+                height REAL,
+                weight REAL,
+                preferred_color TEXT,
+                preferred_fabrics TEXT,
+                preferred_styles TEXT,
+                occasion_types TEXT,
+                style_goals TEXT,
+                budget REAL,
+                skin_color TEXT,
+                wardrobe_img TEXT,
+                user_title TEXT,
+                user_about_1 TEXT,
+                user_about_2 TEXT,
+                virtual_try_on_image TEXT,
+                FOREIGN KEY (username) REFERENCES login(username) ON DELETE CASCADE
+            )
+        """))
+        db.session.commit()
+
+initialize_local_database()
+
+def login_required(f):
+    """Decorator to protect routes that require login"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            return redirect(url_for('login'))
+        # Make session permanent on each request
+        session.permanent = True
+        return f(*args, **kwargs)
+    return decorated_function
 
 class Dashboard:
     def __init__(self, app):
@@ -69,6 +128,263 @@ class Dashboard:
     def register_routes(self):
         # Define the route for the main dashboard page
         self.app.add_url_rule('/', view_func=self.main, methods=['GET', 'POST'])
+        self.app.add_url_rule('/main-feature-recommendation', view_func=self.main_feature_recommendation, methods=['POST'])
+
+    def _map_weather_api_to_bucket(self, weather_payload):
+        weather_main = ""
+        temperature = None
+        if weather_payload:
+            weather = weather_payload.get("weather", [])
+            if weather:
+                weather_main = (weather[0].get("main") or "").lower()
+            temperature = weather_payload.get("main", {}).get("temp")
+
+        if weather_main in {"rain", "drizzle", "thunderstorm"}:
+            return "Rainy"
+        if isinstance(temperature, (int, float)):
+            if temperature >= 27:
+                return "Hot"
+            if temperature <= 16:
+                return "Cold"
+        return None
+
+    def _get_weather_bucket(self, selected_weather, city):
+        selected = (selected_weather or "").title()
+        if selected in {"Hot", "Rainy", "Cold"}:
+            fallback_weather = selected
+        else:
+            fallback_weather = "Hot"
+
+        api_key = os.getenv("OPENWEATHERMAP_API_KEY")
+        if not city or not api_key:
+            return fallback_weather, "simulated"
+
+        try:
+            url = "https://api.openweathermap.org/data/2.5/weather"
+            params = {"q": city, "appid": api_key, "units": "metric"}
+            weather_payload = requests.get(url, params=params, timeout=6).json()
+            bucket = self._map_weather_api_to_bucket(weather_payload)
+            if bucket:
+                return bucket, "openweathermap"
+        except Exception as e:
+            print(f"Weather API fallback activated: {e}")
+
+        return fallback_weather, "simulated"
+
+    def _build_main_feature_payload(self, occasion, weather_bucket, style_note, uploaded_image):
+        occasion_outfits = {
+            "Casual": ["White relaxed tee", "Blue straight jeans", "Clean white sneakers"],
+            "Office": ["Oxford shirt", "Tailored trousers", "Leather loafers"],
+            "Party": ["Statement blazer", "Dark slim pants", "Chelsea boots"],
+            "Date": ["Soft knit top", "Well-fitted chinos/skirt", "Minimal sneakers or heels"]
+        }
+
+        weather_advice = {
+            "Hot": [
+                "Choose breathable cotton or linen pieces.",
+                "Prefer lighter tones to stay cooler under sun.",
+                "Keep layers minimal and use open footwear when possible."
+            ],
+            "Rainy": [
+                "Avoid suede shoes and heavy absorbent fabrics.",
+                "Use quick-dry outer layers and water-resistant footwear.",
+                "Carry a compact jacket in case showers start."
+            ],
+            "Cold": [
+                "Build with layers: thermal base, knit mid-layer, warm outer shell.",
+                "Use wool blends and closed shoes for insulation.",
+                "Add scarf/beanie accessories for functional style."
+            ]
+        }
+
+        style_lower = (style_note or "").lower()
+        style_recommendations = [
+            "These two items pair well: white shirt + navy bottoms.",
+            "Balance one statement piece with neutral basics."
+        ]
+
+        if "black" in style_lower:
+            style_recommendations.insert(0, "You wear black a lot, try lighter tones like cream, beige, or soft blue.")
+        if "formal" in style_lower:
+            style_recommendations.append("To soften formal looks, mix in one casual texture like denim or knit.")
+        if "minimal" in style_lower:
+            style_recommendations.append("Monochrome plus one contrasting accessory keeps minimal looks sharp.")
+
+        outfit_items = occasion_outfits.get(occasion, occasion_outfits["Casual"])
+        pairings = [
+            f"{outfit_items[0]} + {outfit_items[1]}",
+            f"{outfit_items[1]} + {outfit_items[2]}"
+        ]
+
+        gallery_items = self._build_gallery_items(occasion, weather_bucket)
+        inspiration_photos = self._fetch_inspiration_photos(occasion, weather_bucket, style_note)
+
+        mannequin_rel_path = 'images/profile/male-avatar.png'
+        if occasion in {"Party", "Date"}:
+            mannequin_rel_path = 'images/profile/female-avatar.png'
+        mannequin_image = url_for('static', filename=mannequin_rel_path)
+        mannequin_fs_path = os.path.join('app', 'static', mannequin_rel_path.replace('/', os.sep))
+
+        uploaded_preview = None
+        overlay_preview = None
+        if uploaded_image and uploaded_image.filename:
+            upload_name = f"preview_{int(time.time())}_{secure_filename(uploaded_image.filename)}"
+            upload_path = os.path.join(VIRTUAL_TRY_ON_IMG_FOLDER, upload_name)
+            uploaded_image.save(upload_path)
+            uploaded_preview = url_for('static', filename=f'uploads/virtual_try_on/{upload_name}')
+            overlay_preview = self._create_simple_overlay(upload_path, mannequin_fs_path)
+
+        return {
+            "occasion": occasion,
+            "weather": weather_bucket,
+            "weather_suggestions": weather_advice.get(weather_bucket, weather_advice["Hot"]),
+            "recommended_outfit": outfit_items,
+            "style_recommendations": style_recommendations,
+            "pairings": pairings,
+            "gallery_items": gallery_items,
+            "inspiration_photos": inspiration_photos,
+            "virtual_try_on": {
+                "simple_mode": {
+                    "title": "Mannequin Preview",
+                    "image": mannequin_image,
+                    "note": "Simple mode shows your outfit direction on an avatar/mannequin."
+                },
+                "advanced_mode": {
+                    "enabled": bool(uploaded_preview),
+                    "overlay_preview": overlay_preview or uploaded_preview,
+                    "note": "Advanced mode uses your uploaded image as an overlay preview."
+                }
+            }
+        }
+
+    def _usd_to_ngn(self, amount_usd):
+        conversion_rate = 1600
+        return int(round(float(amount_usd) * conversion_rate))
+
+    def _build_gallery_items(self, occasion, weather_bucket):
+        products_by_occasion = {
+            "Casual": [
+                {"title": "Relaxed Cotton Shirt", "image": "images/products/shirt-1.jpg", "price_usd": 18.99, "tag": "Easy Daywear"},
+                {"title": "Denim Friendly Jacket", "image": "images/products/jacket-2.jpg", "price_usd": 34.00, "tag": "Street Casual"},
+                {"title": "Clean White Sneaker", "image": "images/products/sports-1.jpg", "price_usd": 29.50, "tag": "Everyday Step"}
+            ],
+            "Office": [
+                {"title": "Crisp Work Shirt", "image": "images/products/shirt-2.jpg", "price_usd": 24.99, "tag": "Office Sharp"},
+                {"title": "Tailored Formal Shoes", "image": "images/products/shoe-1.jpg", "price_usd": 49.00, "tag": "Boardroom Ready"},
+                {"title": "Minimal Leather Watch", "image": "images/products/watch-1.jpg", "price_usd": 39.99, "tag": "Executive Finish"}
+            ],
+            "Party": [
+                {"title": "Statement Party Heels", "image": "images/products/party-wear-1.jpg", "price_usd": 42.00, "tag": "Night Energy"},
+                {"title": "Bold Party Shoes", "image": "images/products/party-wear-2.jpg", "price_usd": 44.50, "tag": "Spotlight Piece"},
+                {"title": "Layered Party Jacket", "image": "images/products/jacket-5.jpg", "price_usd": 55.00, "tag": "After-Hours Look"}
+            ],
+            "Date": [
+                {"title": "Soft Date-Night Dress", "image": "images/products/clothes-3.jpg", "price_usd": 31.00, "tag": "Romantic Tone"},
+                {"title": "Fine-Strap Watch", "image": "images/products/watch-3.jpg", "price_usd": 36.50, "tag": "Polished Detail"},
+                {"title": "Confident Date Shoes", "image": "images/products/shoe-2.jpg", "price_usd": 46.00, "tag": "Evening Walk"}
+            ]
+        }
+
+        weather_image_boost = {
+            "Hot": "images/products/shorts-1.jpg",
+            "Rainy": "images/products/jacket-1.jpg",
+            "Cold": "images/products/jacket-6.jpg"
+        }
+
+        selected_items = products_by_occasion.get(occasion, products_by_occasion["Casual"])
+        cards = []
+        for item in selected_items:
+            cards.append({
+                "title": item["title"],
+                "tag": item["tag"],
+                "image": url_for("static", filename=item["image"]),
+                "price_usd": item["price_usd"],
+                "price_ngn": self._usd_to_ngn(item["price_usd"])
+            })
+
+        cards.append({
+            "title": f"{weather_bucket} Weather Essential",
+            "tag": "Weather Pick",
+            "image": url_for("static", filename=weather_image_boost.get(weather_bucket, "images/products/shorts-1.jpg")),
+            "price_usd": 27.99,
+            "price_ngn": self._usd_to_ngn(27.99)
+        })
+
+        return cards
+
+    def _fetch_inspiration_photos(self, occasion, weather_bucket, style_note):
+        finder = FashionFinder()
+        if not finder.api_key or not finder.cx:
+            return []
+
+        query = f"{occasion} outfit for {weather_bucket} weather"
+        filters = [style_note] if style_note else []
+
+        try:
+            search_items = finder.search_google_api(query=query, filters=filters, num_results=6)
+        except Exception:
+            return []
+
+        photos = []
+        for item in search_items[:4]:
+            image_link = item.get("image") or item.get("link")
+            if not image_link:
+                continue
+            photos.append({
+                "title": item.get("title") or "Outfit inspiration",
+                "image": image_link,
+                "source": "web"
+            })
+
+        return photos
+
+    def _create_simple_overlay(self, user_image_path, mannequin_path):
+        try:
+            from PIL import Image
+
+            if not os.path.exists(user_image_path) or not os.path.exists(mannequin_path):
+                return None
+
+            user_img = Image.open(user_image_path).convert("RGBA")
+            mannequin_img = Image.open(mannequin_path).convert("RGBA")
+
+            width, height = user_img.size
+            mannequin_img = mannequin_img.resize((width, height))
+
+            # Keep user image visible while placing a styling silhouette on top.
+            mannequin_img.putalpha(95)
+            blended = Image.alpha_composite(user_img, mannequin_img)
+
+            output_name = f"overlay_{int(time.time())}_{os.path.basename(user_image_path)}.png"
+            output_path = os.path.join(VIRTUAL_TRY_ON_IMG_FOLDER, output_name)
+            blended.convert("RGB").save(output_path)
+            return url_for('static', filename=f'uploads/virtual_try_on/{output_name}')
+        except Exception as e:
+            print(f"Overlay generation failed: {e}")
+            return None
+
+    def main_feature_recommendation(self):
+        try:
+            occasion = (request.form.get('occasion') or '').title()
+            weather = (request.form.get('weather') or '').title()
+            city = (request.form.get('city') or '').strip()
+            style_note = (request.form.get('style_note') or '').strip()
+            uploaded_image = request.files.get('user_image')
+
+            if occasion not in {"Casual", "Office", "Party", "Date"}:
+                return jsonify({"error": "Invalid occasion selected."}), 400
+
+            if not weather or weather not in {"Hot", "Rainy", "Cold"}:
+                return jsonify({"error": "Invalid weather selected."}), 400
+
+            weather_bucket, weather_source = self._get_weather_bucket(weather, city)
+            payload = self._build_main_feature_payload(occasion, weather_bucket, style_note, uploaded_image)
+            payload["weather_source"] = weather_source
+            payload["city"] = city or "Not provided"
+
+            return jsonify(payload)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
     def main(self):
         if request.method == "POST":
@@ -167,6 +483,8 @@ class Login:
                 season = location_data.get("season", "Unknown Season")
 
             if user:
+                # Make session permanent
+                session.permanent = True
                 # Store user information in the session
                 session['user'] = {'username': user[0], 'email': user[1], 'phone': user[2], 'name': user[3], 'password': password, 'city':city}  # username = user[0], email = user[1], phone = user[2]
             
@@ -237,7 +555,8 @@ class Login:
     def logout(self):
         # Clear the session data and log out the user
         session.pop('user', None)
-        return redirect(url_for('main'))  # Redirect to the home page after logging out
+        session.permanent = False
+        return redirect(url_for('login'))  # Redirect to the login page after logging out
 
 class Profile:
     def __init__(self, app, db):
@@ -246,10 +565,12 @@ class Profile:
         self.register_routes()
 
     def register_routes(self):
-        self.app.add_url_rule('/profile', methods=['GET'], view_func=self.profile)
+        # Profile route requires login
+        self.app.add_url_rule('/profile', methods=['GET'], view_func=login_required(self.profile))
         self.app.add_url_rule('/quiz', methods=['GET', 'POST'], view_func=self.quiz)
         self.app.add_url_rule('/dataset-images/<path:filename>', methods=['GET'], view_func=self.dataset_images)
-        self.app.add_url_rule('/run_virtual_try_on', methods=['GET', 'POST'], view_func=self.virtual_try_on)
+        # Virtual try-on requires login
+        self.app.add_url_rule('/run_virtual_try_on', methods=['GET', 'POST'], view_func=login_required(self.virtual_try_on))
         self.app.add_url_rule('/check_status/<username>/<vton_img>/<garm_img>', methods=['GET', 'POST'], view_func=self.check_status)
 
     IMAGES_FOLDER = os.path.abspath(os.path.join(os.getcwd(), "data", "fashion-dataset", "images"))
@@ -270,6 +591,11 @@ class Profile:
             )
         vton_img_path = f"app/static/uploads/virtual_try_on/" + img_name.fetchone()[0]
         garm_img_path = data.get("garm_img_path").replace("/dataset-images", "data/fashion-dataset/images")
+
+        try:
+            from ai_engine.virtual_try_on import run_virtual_try_on
+        except Exception as e:
+            return jsonify({"success": False, "error": f"Virtual try-on import failed: {e}"})
 
         if not vton_img_path or not garm_img_path:
             return jsonify({"success": False, "error": "Image paths missing."})
@@ -392,19 +718,50 @@ class Profile:
                     age = 0
                     gender = "Unisex"
                         
-                category_dict = recommend_fashion(
-                                    gender=gender,
-                                    baseColour=[color.strip() for color in (preferred_color or "").split(',')],
-                                    preferredFabrics=[fabrics.strip() for fabrics in (preferred_fabrics or "").split(',')],
-                                    preferredStyles=[styles.strip() for styles in (preferred_styles or "").split(',')],
-                                    occasionTypes=[occasion.strip() for occasion in (occasion_types or "").split(',')],
-                                    styleGoals=[goal.strip() for goal in (style_goals or "").split(',')],
-                                    bodyType=body_type
-                                )
-                
+                category_dict = {}
+                try:
+                    from ai_engine.fashion_recommender import recommend_fashion
+                    wardrobe_img_path = None
+                    if wardrobe_img:
+                        candidate_path = os.path.join(WARDROBE_IMG_FOLDER, wardrobe_img)
+                        if os.path.exists(candidate_path):
+                            wardrobe_img_path = candidate_path
+
+                    season = session['user'].get('season') or global_season
+                    if isinstance(season, str) and season.lower() == 'unknown season':
+                        season = None
+
+                    category_dict = recommend_fashion(
+                            gender=gender,
+                            baseColour=[color.strip() for color in (preferred_color or "").split(',')],
+                            preferredFabrics=[fabrics.strip() for fabrics in (preferred_fabrics or "").split(',')],
+                            preferredStyles=[styles.strip() for styles in (preferred_styles or "").split(',')],
+                            occasionTypes=[occasion.strip() for occasion in (occasion_types or "").split(',')],
+                            styleGoals=[goal.strip() for goal in (style_goals or "").split(',')],
+                            bodyType=body_type,
+                            skin_color=skin_color,
+                            season=season,
+                            wardrobe_img=wardrobe_img_path
+                        )
+                except Exception as e:
+                    print(f"Fashion recommendation import failed: {e}")
+                    category_dict = {}
+
+                recommended_outfits = []
+                system_accuracy = 0.0
+                top5_precision = 0.0
+                try:
+                    from ai_engine.hybrid_engine import get_hybrid_recommendation
+                    recommended_outfits, hybrid_metrics = get_hybrid_recommendation(username, season)
+                    system_accuracy = hybrid_metrics.get('system_accuracy', 0.0)
+                    top5_precision = hybrid_metrics.get('top_5_precision', 0.0)
+                except Exception as e:
+                    print(f"Hybrid recommendation import failed: {e}")
+
                 image_path = "app/static/uploads/profile/" + profile_pic
                 # Call the function and get results
                 try:
+                    from ai_engine.age_gender_skinTone import process_fashion_recommendation
                     skin_tone, gender_sentence, age_sentence, recommend_color, gender_category, detected_age, outfits = process_fashion_recommendation(image_path)
                 except Exception as e:
                     print("An error occurred while processing the fashion recommendation:", e)
@@ -417,9 +774,9 @@ class Profile:
                     outfits = []
                 
                 # Weather based recommendation
-                from app.globals import season
                 if season and gender:
                     try:
+                        from app.weather_based.recommend_cli import weather_based_recommend
                         weather_recommendations = weather_based_recommend(season, gender)
                     except Exception as e:
                         weather_recommendations = []
@@ -432,7 +789,12 @@ class Profile:
                         print("No gender data available")
                 
                 image_wardrobe_path = "app/static/uploads/profile/" + profile_pic
-                image_recommend = rec(image_wardrobe_path)
+                try:
+                    from app.image_based.cli_recommender import rec
+                    image_recommend = rec(image_wardrobe_path)
+                except Exception as e:
+                    print(f"Image recommendation import failed: {e}")
+                    image_recommend = []
                 
                 occasion_types = occasion_types.split(',')
                 if occasion_types:
@@ -440,7 +802,12 @@ class Profile:
                     for occ in occasion_types:
                         if occ == 'Casual Outing':
                             occ = 'Casual'
-                        reco = recommend(occ, gender, top_items=5)
+                        try:
+                            from app.occasion.app import recommend
+                            reco = recommend(occ, gender, top_items=5)
+                        except Exception as e:
+                            print(f"Occasion recommendation import failed: {e}")
+                            reco = []
                         all_occasion[occ] = reco
                             
                 # Format date
@@ -493,6 +860,9 @@ class Profile:
                     paragraph_1=user_about_1,
                     paragraph_2=user_about_2,
                     category_dict=category_dict,
+                    recommended_outfits=recommended_outfits,
+                    system_accuracy=system_accuracy,
+                    top5_precision=top5_precision,
                     skin_tone=skin_tone,
                     recommend_color=recommend_color,
                     gender_sentence=gender_sentence,
@@ -595,16 +965,20 @@ class Profile:
 
                     Ensure the language is elegant, concise, and makes the user sound fashion-forward and confident. Avoid repetition and use positive, inspiring vocabulary.
                     """
-                try:
-                    response = chat. send_message (prompt)
-                    paragraph = response.text
-                    paragraph = paragraph.split("\n\n")
-                    user_about_1 = paragraph[0]
-                    user_about_2 = paragraph[1]
-                except Exception as e:
-                    user_about_1 = "AI Couldn't generate the title"
-                    user_about_2 = "AI Couldn't generate the description"
-            
+                if chat is not None:
+                    try:
+                        response = chat.send_message(prompt)
+                        paragraph = response.text
+                        paragraph = paragraph.split("\n\n")
+                        user_about_1 = paragraph[0] if len(paragraph) > 0 else "A stylish individual with an eye for fashion."
+                        user_about_2 = paragraph[1] if len(paragraph) > 1 else "Confident, creative, and ready to make smart outfit choices."
+                    except Exception as e:
+                        user_about_1 = "AI couldn't generate the title"
+                        user_about_2 = "AI couldn't generate the description"
+                else:
+                    user_about_1 = "A stylish individual with a refined sense of personal fashion."
+                    user_about_2 = "Confident, modern, and comfortable in curated outfits that reflect their personality."
+
                 prompt = f"""
                     Using the following details about a user, provide one word that best describes the overall style or impression of the individual. Focus solely on the most fitting adjective or noun that reflects the user's fashion preferences, style goals, and persona. Do not add any special characters like asterisks or quotation marks—just return the word itself.
 
@@ -623,12 +997,15 @@ class Profile:
                     - Skin Color: {skin_color}
                     """
                 
-                try:
-                    response = chat.send_message(prompt)
-                    clean_output = response.text.strip().replace('*', '')  # Removing any asterisks
-                    user_title = clean_output
-                except Exception as e:
-                    user_title = "AI Couldn't generate the title"
+                if chat is not None:
+                    try:
+                        response = chat.send_message(prompt)
+                        clean_output = response.text.strip().replace('*', '')  # Removing any asterisks
+                        user_title = clean_output
+                    except Exception as e:
+                        user_title = "Stylish"
+                else:
+                    user_title = "Stylish"
 
                 # Ensure budget is a valid number (float)
             try:

@@ -1,284 +1,199 @@
-# Ai-Powered Personal Stylish and Outfit Recommendation
+# Development of a Fashion-Based AI Wardrobe Assistant
 
-## 1. User Profile and Preferences 
-• Profile Creation: Allow users to create a profile with 
-their: 
-◦ Gender, age, body type, height, and weight. 
-◦ Preferred colors, fabrics, and styles. 
-◦ Occasion types (casual, formal, party, business). 
-• Style Quiz: Short quiz to identify fashion preferences. 
-• Wardrobe Input: Users can upload their wardrobe 
-items (images or descriptions). 
-## 2. Outfit Recommendations 
-• AI-Powered Recommendations: 
-◦ Use machine learning to suggest outfits based on 
-user preferences and the occasion. 
-◦ Recommend outfits for specific weather 
-conditions, location, or season. 
-◦ Suggest complementary accessories (shoes, bags, 
-jewelry). 
-• Mix & Match Suggestions: Combine existing 
-wardrobe items with new recommendations. 
-## 3. Outfit Preview 
-• Virtual Try-On: 
-◦ Implemented using OOTDiffusion for realistic 
-virtual try-ons. 
-◦ Users upload a photo and visualize outfits on 
-themselves. 
-• Outfit Visuals: Display styled outfits with options to 
-swap or change elements. 
-## 4. Advanced Features 
-• Weather-Based Suggestions: Recommend outfits 
-based on local weather forecasts. 
-• Event-Specific Outfits: Tailor recommendations for 
-events like weddings, parties, or work meetings. 
-• Trend Analysis: Highlight trending outfits, colors, and 
-styles. 
-## 5. AI and ML Implementation 
-• Clothing Style Recognition: 
-◦ Train a model to identify clothing items and styles 
-from uploaded images. 
-◦ Use pre-trained models like OpenCV or 
-TensorFlow for image classification. 
-• Personalized Suggestions: 
-◦ Use collaborative filtering (like Netflix) to 
-recommend outfits based on user preferences and 
-trends. 
-◦ Train models with datasets like Fashion-MNIST or 
-DeepFashion. 
-## 6. Recommendations for Existing Wardrobe 
-• Allow users to upload photos of their clothing. 
-• Suggest outfits by analyzing uploaded wardrobe items 
-and filling in missing pieces. 
-## 7. Community and Social Features 
-• Style Boards: Let users save their favorite looks. 
-• Style Sharing: Share outfits with friends or a 
-community for feedback. 
-• Follow Stylists: Provide curated suggestions from 
-professional stylists. 
-## 8. Notifications and Alerts 
-• Daily style recommendations. 
-• Notifications for weather or events requiring specific 
-outfits. 
-• Alerts for new trends or personalized deals. 
-## 9. Technology Stack 
-• Backend: Python (Flask) 
-• Frontend: HTML, CSS, JavaScript 
-• AI Tools: DeepFace, TensorFlow, Keras, scikit-learn, 
-PyTorch, torchvision, OpenCV, OOTDiffusion. 
-• Database: MySQL for storing user data and wardrobe 
-items
+## Project Title & Overview
 
-## AI-Powered Features:
-1. Gender, Age, and Skin Tone Detection
-2. Skin Tone-Based Outfit Recommendations
-3. Weather-Based Outfit Recommendations
-4. Occasion-Based Outfit Recommendations
-5. Image-Based Outfit Recommendations
-6. Virtual Try-On using OOTDiffusion
+**Development of a Fashion-Based AI Wardrobe Assistant** is a Python-based fashion recommendation system designed to help users manage their wardrobe and receive personalized outfit suggestions. The application ingests user profile data, wardrobe image metadata, season and occasion preferences, and generates recommendations using a mix of attribute filtering, content-based similarity, and occasion-aware outfit construction.
 
-## Non-AI Features:
-1. Interactive Dashboard
-2. Dynamic Login and Sign-Up Pages
-3. Style Quiz Page to Capture User Preferences
-4. Profile Page Displaying User Information and Recommended Outfits
+## System Architecture
 
-## ScreenShots
-![Screenshot (106)](https://github.com/user-attachments/assets/ff69b191-4707-44af-ba0f-bccd3d41c9a2)
-<p align="center" style="font-size: 48px;"> SignIn </p>
+The system is structured as a Flask web application with three main layers:
 
-![Screenshot (107)](https://github.com/user-attachments/assets/ae18accc-2bfe-4cb2-9254-6d9d064a57a1)
-<p align="center" style="font-size: 48px;"> SignUp </p>
+- **Frontend**: HTML templates located in `app/templates`, with static assets served from `app/static`.
+- **Backend**: The Flask server in `app/main.py` handles routing, session management, profile creation, login/signup workflows, and coordination of recommendation services.
+- **Data/Model Layer**: The application uses a local database and dataset files stored under `data/`, plus ML helper modules in `ai_engine/` and recommendation modules in `app/weather_based/`, `app/occasion/`, and `app/image_based/`.
 
-![Screenshot (99)](https://github.com/user-attachments/assets/cb3728f4-6e60-445c-a8c7-1f195af5c802)
-<p align="center" style="font-size: 48px;"> Dashboard 1. </p>
+The backend orchestrates interactions between stored user data, wardrobe metadata, and recommendation logic. When a user accesses their profile, the backend reads profile attributes and invokes specialized recommendation modules to generate outfit suggestions.
 
-![Screenshot (100)](https://github.com/user-attachments/assets/62aa25eb-f8bb-4327-b142-327caf07b1aa)
-<p align="center" style="font-size: 48px;"> Dashboard 2. </p>
+## Database Schema
 
-![Screenshot (101)](https://github.com/user-attachments/assets/f7e7d462-44c0-4123-a927-a9a38a27a9e2)
-<p align="center" style="font-size: 48px;"> Dashboard 3. </p>
+The app stores user and wardrobe data in a relational schema that includes:
 
-![Screenshot (102)](https://github.com/user-attachments/assets/c9d0d1e7-dddc-4d2b-85c9-a280037a36b7)
-<p align="center" style="font-size: 48px;"> Dashboard 4. </p>
+- `login`
+  - `id` (Primary Key)
+  - `name`
+  - `username` (Unique)
+  - `phone`
+  - `email` (Unique)
+  - `password`
 
-![Screenshot (103)](https://github.com/user-attachments/assets/561caacb-2821-4fb1-8876-9cecca3fee4b)
-<p align="center" style="font-size: 48px;"> Dashboard 5. </p>
+- `user_information`
+  - `id` (Primary Key)
+  - `username` (Unique, Foreign Key → `login.username`)
+  - `profile_pic`
+  - `gender`
+  - `date_of_birth`
+  - `body_type`
+  - `height`
+  - `weight`
+  - `preferred_color`
+  - `preferred_fabrics`
+  - `preferred_styles`
+  - `occasion_types`
+  - `style_goals`
+  - `budget`
+  - `skin_color`
+  - `wardrobe_img`
+  - `user_title`
+  - `user_about_1`
+  - `user_about_2`
+  - `virtual_try_on_image`
 
-![Screenshot (104)](https://github.com/user-attachments/assets/5e0eaa07-9218-4617-a1bf-177623cfcb53)
-<p align="center" style="font-size: 48px;"> Dashboard 6. </p>
+### Wardrobe Item Storage
 
-![Screenshot (105)](https://github.com/user-attachments/assets/1c358b5f-420d-4cef-aeae-555382b08454)
-<p align="center" style="font-size: 48px;"> Dashboard 7. </p>
+Wardrobe recommendation inputs are also sourced from dataset files and metadata files rather than a dedicated wardrobe table:
 
-![Screenshot (119)](https://github.com/user-attachments/assets/eac7072f-e1c2-45a8-a386-28ef4c7cf2e3)
-<p align="center" style="font-size: 48px;"> Quiz 1. </p>
+- `data/fashion-dataset/fashion.csv` and `data/fashion-dataset/styles.csv` provide item attributes like color, category, article type, brand, and price.
+- `app/image_based/embeddings.pkl` and `app/image_based/filenames.pkl` store precomputed image embeddings for content-based similarity.
+- `app/occasion/metadata.pkl` stores occasion-specific item metadata used to build multi-piece outfits.
 
-![Screenshot (120)](https://github.com/user-attachments/assets/e8dcf519-68cf-47e3-aca7-d9ca9cc6f817)
-<p align="center" style="font-size: 48px;"> Quiz 2. </p>
+These datasets represent wardrobe items with attributes such as category, subcategory, color, season, usage, and price.
 
-![Screenshot (108)](https://github.com/user-attachments/assets/2482dc75-7877-4efb-a905-99d9ff769cee)
-<p align="center" style="font-size: 48px;"> User about page </p>
+## Recommendation Engine Logic
 
-![Screenshot (110)](https://github.com/user-attachments/assets/8331b7e0-ccd8-4980-b780-3b6439572279)
-<p align="center" style="font-size: 48px;"> Personalized Outfit Based on Skin Tone </p>
+### 1. User Preferences and Profile-Based Filtering
 
-![Screenshot (113)](https://github.com/user-attachments/assets/08d60beb-1d72-4422-ae17-135dfa1a9e14)
-<p align="center" style="font-size: 48px;"> Wardrobe Image-Based Recommendation </p>
+The application reads a user’s profile from `user_information`, including:
 
-![Screenshot (112)](https://github.com/user-attachments/assets/a5847187-b486-42ab-a5fd-d2923153c840)
-<p align="center" style="font-size: 48px;"> Weather-Based Outfit Recommendation </p>
+- gender
+- body type
+- preferred colors
+- preferred fabrics
+- preferred styles
+- occasion types
+- style goals
+- wardrobe image
 
-![Screenshot (114)](https://github.com/user-attachments/assets/f34ab91c-65bb-426e-b689-dda066131ce4)
-<p align="center" style="font-size: 48px;"> Occasion-Based Outfit Suggestions </p>
+Using this metadata, the app applies content-based filtering by matching item attributes to user preferences.
 
-![Screenshot (115)](https://github.com/user-attachments/assets/63b03fd0-cd11-431b-b4f2-94348cd250ed)
-<p align="center" style="font-size: 48px;"> Trove – Category Selection Page </p>
+### 2. Weather-Based Recommendation
 
-![Screenshot (116)](https://github.com/user-attachments/assets/18ee7736-efb6-4d88-894c-e0ee3b788553)
-<p align="center" style="font-size: 48px;"> Trove – Category-Based Product Listing </p>
+Weather-based recommendations are handled via `app/weather_based/recommend_cli.py` and `app/weather_based/models/recommender.py`.
 
-![Screenshot (117)](https://github.com/user-attachments/assets/e2f0306d-b50f-4bf4-9ec0-877d4dbd2b42)
-![Screenshot (118)](https://github.com/user-attachments/assets/9e868cf5-4916-4c5a-90b2-d2e95c3c5bf8)
-<p align="center" style="font-size: 48px;"> Contact Page – User Query Form </p>
+The logic is:
 
-![Screenshot (121)](https://github.com/user-attachments/assets/8474101c-a385-4347-b21c-31c0ef129eb4)
-<p align="center" style="font-size: 48px;"> Voice and Text-Based Recommendation Interface </p>
+1. Accept a `season` value and a `gender` label.
+2. Normalize both values and construct an `age_group` tag such as `Adults-Men` or `Adults-Women`.
+3. Load a pre-trained weather-aware model and metadata from pickled storage.
+4. Filter the item dataset for: 
+   - matching `season`
+   - matching `gender`
+   - matching `age_group`
+5. Return a prioritized list of seasonally appropriate items.
 
+> Note: The code uses season-based weather logic rather than real-time temperature or detailed conditions.
 
+### 3. Occasion-Based Recommendation
 
-# 🚀 How to Run This Project
+Occasion recommendations are produced through `app/occasion/outfit_builder.py` and `app/occasion/recommend.py`.
 
-1. Navigate to the project directory:
+The workflow is:
 
-    cd ai-powered-personal-stylish-and-outfit-recommendation/
+1. Load occasion metadata from `app/occasion/metadata.pkl`.
+2. Filter items by `usage` (occasion) and optionally by `gender`.
+3. If strict matching yields too few results, relax the gender filter or return all available items.
+4. Categorize filtered items into `topwear`, `bottomwear`, `footwear`, and `accessories`.
+5. Assemble outfits by selecting one item from each category and ensuring a minimum top+bottom combination.
 
-2. Prepare the datasets and models:
-    You have two options:
-        Download the pre-trained models and datasets.
-        Train the models yourself.
-    The following directories contain the necessary components:
-    - age_gender-dataset/
-    - fashion_recommend/    
-    - fashion-dataset/
-    - image_based/
-    - occasion/
-    - weather_based/
-    📄 Each folder includes a text file with detailed instructions on what files are needed, where to place them, and how to set them up. Please refer to those files for proper configuration.
+This produces multi-piece outfit suggestions appropriate for formal, casual, or event-based occasions.
 
-3. Install dependencies:
-    Make sure all required packages are installed:
-        pip install -r requirements.txt
+### 4. Content-Based Image Similarity
 
-4. Update database configuration:
-    Modify the database credentials in the following files:
-        app/main.py → Line 60
-            Locate the connection string:
-                mysql://username:password@host:port/fashion
+The wardrobe assistant also supports image-based recommendations via `app/image_based/cli_recommender.py`.
 
-            Replace username, password, host, and port with your actual MySQL credentials.
-            
-            Do not change the database name (fashion) — it will be created automatically by the program.
+The process is:
 
-        app/database.py → Line 4
-            Update the constructor parameters in the __init__ method:
-                def __init__(self, host='localhost', user='your_username', password='your_password', database='fashion'):
+1. Save a wardrobe or fashion item image upload.
+2. Extract visual features using a ResNet50-based embedding model.
+3. Normalize the embedding vector.
+4. Run K-Nearest Neighbors search against precomputed item embeddings stored in `app/image_based/embeddings.pkl`.
+5. Return similar product metadata from `data/fashion-dataset/fashion.csv`.
 
-            Replace 'your_username' and 'your_password' with your actual MySQL username and password.
+This is a classic content-based filtering approach that recommends visually similar items.
 
-5. Set up Gemini API (Custom Search)
-    This project uses the Gemini Custom Search API. You'll need two credentials:
-        G_API_KEY: Your Gemini API key
-        G_CX: Your Custom Search Engine ID (CX)
-    
-    📍 Where to use them:
-    In app/main.py → Line 40, the API key is accessed like this:
-        API_KEY = os.getenv('G_API_KEY')  # Recommended for security
+### 5. Attribute and Preference Relaxation Logic
 
-    While you can hardcode the key (e.g., API_KEY = "your_api_key"), using environment variables is strongly recommended for better security.
+The core item filtering logic in `ai_engine/fashion_recommender.py` follows a stepwise relaxation strategy:
 
-    ✅ How to set environment variables from the command line:
+1. Start by filtering on all provided attributes: gender, color, fabrics, styles, occasions, and style goals.
+2. If no results are found, relax filters gradually:
+   - first drop some preference filters and keep gender/color/style
+   - then drop all but gender/color
+   - finally fallback to gender-only recommendations
+3. If still empty, return a small random sample of available items.
 
-    On Windows (Command Prompt):
-        set G_API_KEY = "your_actual_api_key"
-        set G_CX = "your_actual_cx_value"
+This ensures the assistant still returns useful wardrobe suggestions even when the profile is sparse.
 
-    On macOS/Linux (Bash/Zsh):
-        export G_API_KEY=your_actual_api_key
-        export G_CX=your_actual_cx_value
+## Feature Mapping
 
-    These variables will be available during the session and accessed in your code via os.getenv().
+The project implements the following recommendation and wardrobe management features:
 
-6. Set Up Hugging Face API for Virtual Try-On
+- **Content-Based Filtering**
+  - Visual similarity matching with ResNet50 embeddings in `app/image_based/cli_recommender.py`.
+  - Attribute-based filtering on gender, color, fabric, style, occasion, and body type in `ai_engine/fashion_recommender.py`.
 
-    This project uses Hugging Face’s Inference API to generate virtual try-on clothing images.
+- **Seasonal Recommendation**
+  - Weather/season-specific suggestions using `app/weather_based/recommend_cli.py` and the `FashionRecommender` model.
 
-    🔗 https://huggingface.co/settings/tokens
+- **Occasion-Aware Outfit Assembly**
+  - Occasion-driven outfit building with category-aware selection in `app/occasion/outfit_builder.py`.
 
-    To avoid failures due to rate limits, you can use multiple API keys (e.g., from different accounts).
+- **User Profile and Wardrobe Metadata**
+  - Persistent user preferences stored in relational tables via SQLAlchemy.
+  - Wardrobe images and uploaded profile pictures saved under `app/static/uploads/`.
 
-    In ai_engine/virtual_try_on.py → Line 10, update the api_tokens list:
+- **Fallback Strategy**
+  - Progressive filter relaxation in the preference recommender.
+  - Safe handling of missing recommendation modules to keep the app running.
 
-        Option 1 (Direct):
-            api_tokens = ["your_api_key_1", "your_api_key_2"]
+## Tech Stack
 
-        Option 2 (Using environment variables – recommended):
-            Set in terminal:
-                set HF_ONE_API = "Your API KEY"
-                set HF_TWO_API = "Your API KEY"
+- Language: Python
+- Web Framework: Flask
+- Database ORM: SQLAlchemy
+- Storage: SQLite (local fallback) / MySQL-compatible schema
+- Data Processing: Pandas, NumPy
+- Machine Learning:
+  - scikit-learn (Nearest Neighbors, OneHotEncoder, TF-IDF)
+  - TensorFlow / Keras (ResNet50 embeddings)
+- Image Processing: PIL, OpenCV
+- External APIs / integrations:
+  - Optional Gemini-based natural language/AI generation via `google-generativeai`
+  - Optional Google Custom Search integration in `app/finder.py`
+  - OpenWeatherMap-style geocoding placeholder in `app/main.py`
 
-            Update code:
-                api_tokens = [os.getenv("HF_ONE_API"), os.getenv("HF_TWO_API")]
-            
-        One key is enough to start, but multiple keys improve reliability.
+## Project Scope
 
-7. Set Up Weather API (OpenWeatherMap)
+This repository is focused on recommendation logic and wardrobe management. The core value is in:
 
-    This project uses the OpenWeatherMap API to detect the current weather based on your location.
+- deriving outfit suggestions from user preferences,
+- matching wardrobe items to seasons and occasions,
+- recommending visually similar fashion items,
+- storing and managing user profile and wardrobe metadata.
 
-    🔗 https://home.openweathermap.org/api_keys
+It intentionally does not rely on a complete virtual try-on experience for the primary evaluation of the project. While the code includes references to virtual try-on utilities, the README scope is limited to the recommendation engine and wardrobe assistant features.
 
-    In the file app/main.py, update the following lines:
-        Line 104
-        Line 127
-    Replace:
-        OPENWEATHERMAP_API_KEY = ""  # Replace with your API key
-    With:
-        OPENWEATHERMAP_API_KEY = "your_api_key"
+## Running the App
 
-    This API is used to detect the user's current weather conditions, which helps personalize outfit recommendations.
+1. Install Python dependencies from `requirements.txt`.
+2. Ensure dataset files exist under `data/fashion-dataset/` and pickled metadata exists for the weather and occasion modules.
+3. Run the Flask server with:
 
-    ✅ Only one API key is needed.
+```bash
+python run.py
+```
 
-8. Run the Project
-    Once all setup steps are complete, start the application by running:
-        python run.py
+4. Access the app at `http://127.0.0.1:5000`.
 
-    The application will start locally and provide two links:
-        A local URL (accessible only from your machine)
-        An external URL (via NGROK, accessible from any device connected to the internet)
-    
-    🌐 Make Your App Public with NGROK
-    To allow others to access your app online, you can use NGROK — a tunneling service that exposes your local server to the internet.
+---
 
-    🔗 Download NGROK https://dashboard.ngrok.com/get-started/setup/windows
-    
-    🛠️ Setup Instructions:
-        1. Move the downloaded NGROK executable to a convenient location (e.g., C:\ngrok or inside your project directory).
-
-        2. Open NGROK in a terminal (double-click or use command line).
-
-        3. Run the following command (replace 5000 with your actual port if different):
-            ngrok http 5000 
-        4. NGROK will generate a public URL (e.g., https://your-app.ngrok.io).
-            Share this link — anyone can visit your application from anywhere.
-
-    🔒 Optional: Set a Static Domain
-        To keep your NGROK URL unchanged in the future:
-        Visit the "Deploy Your App" section on NGROK's dashboard.
-        Set up a static domain for consistent access.
-
-9. Stop the Project
-    To terminate the running application, press:
-        Ctrl + C
-    This will stop the server and end the process.
+**Note:** A technical reviewer should evaluate this system as a hybrid recommendation prototype that combines profile-based filtering, seasonal/occasion logic, and content-based image similarity for fashion wardrobe assistance.

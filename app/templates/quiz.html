@@ -81,6 +81,12 @@
     </style>
 </head>
 <body>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background-color: #f5f5f5; border-bottom: 1px solid #ddd;">
+        <h3 style="margin: 0; color: #333;">Fashion Profile Creation</h3>
+        {% if 'user' in session %}
+        <a href="{{ url_for('logout') }}" style="background-color: #e74c3c; color: white; padding: 8px 15px; border-radius: 4px; text-decoration: none; font-weight: 600;">Logout</a>
+        {% endif %}
+    </div>
     <div class="container">
         <header>Create Your Style Profile</header>
         <div class="divider"></div>

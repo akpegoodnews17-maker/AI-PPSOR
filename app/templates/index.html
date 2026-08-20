@@ -18,6 +18,7 @@
     - custom css link
   -->
   <link rel="stylesheet" href="{{ url_for('static', filename = 'css/style-prefix.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename = 'css/style.css') }}">
 
   <!--
     - google font link
@@ -217,10 +218,18 @@
         </div>
 
         <div class="header-user-actions">
-
-          <button class="action-btn" onclick="window.location.href='{{ url_for('profile') }}'">
+          {% if 'user' in session %}
+          <button class="action-btn" onclick="window.location.href='{{ url_for('profile') }}'" title="Profile">
             <ion-icon name="person-outline"></ion-icon>
-        </button>        
+          </button>
+          <button class="action-btn" onclick="window.location.href='{{ url_for('logout') }}'" title="Logout">
+            <ion-icon name="log-out-outline"></ion-icon>
+          </button>
+          {% else %}
+          <button class="action-btn" onclick="window.location.href='{{ url_for('login') }}'" title="Login">
+            <ion-icon name="log-in-outline"></ion-icon>
+          </button>
+          {% endif %}
         
           <button class="action-btn">
             <ion-icon name="heart-outline"></ion-icon>
@@ -811,7 +820,7 @@
               <h2 class="banner-title">Women's latest fashion sale</h2>
 
               <p class="banner-text">
-                starting at &dollar; <b>20</b>.00
+                starting at &#8358; <b>13,000</b>
               </p>
 
               <a href="#" class="banner-btn">Shop now</a>
@@ -831,7 +840,7 @@
               <h2 class="banner-title">Modern sunglasses</h2>
 
               <p class="banner-text">
-                starting at &dollar; <b>15</b>.00
+                starting at &#8358; <b>9,750</b>
               </p>
 
               <a href="#" class="banner-btn">Shop now</a>
@@ -851,7 +860,7 @@
               <h2 class="banner-title">New fashion summer sale</h2>
 
               <p class="banner-text">
-                starting at &dollar; <b>29</b>.99
+                starting at &#8358; <b>19,500</b>
               </p>
 
               <a href="#" class="banner-btn">Shop now</a>
@@ -1049,672 +1058,150 @@
 
 
 
-    <nav class="mobile-navigation-menu-ai  has-scrollbar" data-mobile-menu-Ai>
-      <div class="menu-top">
+    <nav class="mobile-navigation-menu-ai has-scrollbar" data-mobile-menu-Ai>
+      <div class="menu-top smart-panel-top">
         <h2 class="menu-title">Smart Outfit Recommendation</h2>
-
-        <button class="mobile-navigation-menu-ai-button mobile-navigation-menu-ai-button-hide" id="mobile-navigation-mic-button">
-          <ion-icon name="mic-outline"></ion-icon>
-      </button>
-      <input class="mobile-navigation-menu-ai-input-hide" type="text" placeholder="Smart Outfit Recommendation" id="mobile-navigation-outfit-input">
-            
-            <button class="mobile-navigation-menu-ai-button mobile-navigation-menu-ai-button-hide" id="mobile-navigation-paper-plane-button">
-              <ion-icon name="paper-plane-outline"></ion-icon>
-            </button>
-
         <button class="menu-close-btn" data-mobile-menu-close-btn-Ai>
           <ion-icon name="close-outline"></ion-icon>
         </button>
-
-        <div class="mobile-navigation-menu-ai-input">
-          <button class="mobile-navigation-menu-ai-button" id="mobile-navigation-mic-button">
-            <ion-icon name="mic-outline"></ion-icon>
-        </button>
-
-            <input type="text" placeholder="Smart Outfit Recommendation" id="mobile-navigation-outfit-input">
-            
-            <button class="mobile-navigation-menu-ai-button" id="mobile-navigation-paper-plane-button">
-              <ion-icon name="paper-plane-outline"></ion-icon>
-            </button>
-        </div>
-
       </div>
-      <div class="product-main">
 
-        <h2 class="title">New Products</h2>
+      <div class="smart-panel-shell">
+        <section class="smart-panel-hero">
+          <div class="smart-hero-badge"><span></span>AI Stylist</div>
+          <h3 class="smart-panel-title">Build a look for<br><em>every moment</em></h3>
+          <p class="smart-panel-copy">Pick your occasion, weather, and style note. Our AI generates weather-aware pairings, visual pieces, and inspiration photos instantly.</p>
+        </section>
 
-        <div class="product-grid">
-
-          <div class="showcase">
-
-            <div class="showcase-banner">
-
-              <img src="{{ url_for('static', filename='images/products/jacket-3.jpg') }}" alt="Mens Winter Leathers Jackets" width="300" class="product-img default">
-              <img src="{{ url_for('static', filename='images/products/jacket-4.jpg') }}" alt="Mens Winter Leathers Jackets" width="300" class="product-img hover">
-
-              <p class="showcase-badge">15%</p>
-
-              <div class="showcase-actions">
-
-                <button class="btn-action">
-                  <ion-icon name="heart-outline"></ion-icon>
-                </button>
-
-                <button class="btn-action">
-                  <ion-icon name="eye-outline"></ion-icon>
-                </button>
-
-                <button class="btn-action">
-                  <ion-icon name="repeat-outline"></ion-icon>
-                </button>
-
-                <button class="btn-action">
-                  <ion-icon name="bag-add-outline"></ion-icon>
-                </button>
-
-              </div>
-
+        <form id="main-feature-form" enctype="multipart/form-data" class="smart-panel-form">
+          <p class="smart-form-section-title">Your Details</p>
+          <div class="smart-grid-two">
+            <div class="smart-field">
+              <label for="feature-occasion">Occasion</label>
+              <select id="feature-occasion" name="occasion" required>
+                <option value="">Select occasion</option>
+                <option value="Casual">Casual</option>
+                <option value="Office">Office</option>
+                <option value="Party">Party</option>
+                <option value="Date">Date</option>
+              </select>
             </div>
 
-            <div class="showcase-content">
-
-              <a href="#" class="showcase-category">jacket</a>
-
-              <a href="#">
-                <h3 class="showcase-title">Mens Winter Leathers Jackets</h3>
-              </a>
-
-              <div class="showcase-rating">
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-              </div>
-
-              <div class="price-box">
-                <p class="price">$48.00</p>
-                <del>$75.00</del>
-              </div>
-
+            <div class="smart-field">
+              <label for="feature-weather">Weather</label>
+              <select id="feature-weather" name="weather" required>
+                <option value="">Select weather</option>
+                <option value="Hot">Hot</option>
+                <option value="Rainy">Rainy</option>
+                <option value="Cold">Cold</option>
+              </select>
             </div>
-
           </div>
 
-          <div class="showcase">
-          
-            <div class="showcase-banner">
-              <img src="{{ url_for('static', filename='images/products/shirt-1.jpg') }}" alt="Pure Garment Dyed Cotton Shirt" class="product-img default"
-                width="300">
-              <img src="{{ url_for('static', filename='images/products/shirt-2.jpg') }}" alt="Pure Garment Dyed Cotton Shirt" class="product-img hover"
-                width="300">
-          
-              <p class="showcase-badge angle black">sale</p>
-          
-              <div class="showcase-actions">
-                <button class="btn-action">
-                  <ion-icon name="heart-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="eye-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="repeat-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="bag-add-outline"></ion-icon>
-                </button>
-              </div>
-            </div>
-          
-            <div class="showcase-content">
-              <a href="#" class="showcase-category">shirt</a>
-          
-              <h3>
-                <a href="#" class="showcase-title">Pure Garment Dyed Cotton Shirt</a>
-              </h3>
-          
-              <div class="showcase-rating">
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-              </div>
-          
-              <div class="price-box">
-                <p class="price">$45.00</p>
-                <del>$56.00</del>
-              </div>
-          
-            </div>
-          
+          <div class="smart-field">
+            <label for="feature-city">City (optional — live weather)</label>
+            <input id="feature-city" name="city" type="text" placeholder="e.g. Lagos, Abuja, London">
           </div>
 
-          <div class="showcase">
-          
-            <div class="showcase-banner">
-              <img src="{{ url_for('static', filename='images/products/jacket-5.jpg') }}" alt="MEN Yarn Fleece Full-Zip Jacket" class="product-img default"
-                width="300">
-              <img src="{{ url_for('static', filename='images/products/jacket-6.jpg') }}" alt="MEN Yarn Fleece Full-Zip Jacket" class="product-img hover"
-                width="300">
-          
-              <div class="showcase-actions">
-                <button class="btn-action">
-                  <ion-icon name="heart-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="eye-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="repeat-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="bag-add-outline"></ion-icon>
-                </button>
-              </div>
-            </div>
-          
-            <div class="showcase-content">
-              <a href="#" class="showcase-category">Jacket</a>
-          
-              <h3>
-                <a href="#" class="showcase-title">MEN Yarn Fleece Full-Zip Jacket</a>
-              </h3>
-          
-              <div class="showcase-rating">
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-              </div>
-          
-              <div class="price-box">
-                <p class="price">$58.00</p>
-                <del>$65.00</del>
-              </div>
-          
-            </div>
-          
+          <div class="smart-field">
+            <label for="feature-style-note">Style note</label>
+            <textarea id="feature-style-note" name="style_note" rows="3" placeholder="e.g. Minimal, mostly black, professional look"></textarea>
           </div>
 
-          <div class="showcase">
-          
-            <div class="showcase-banner">
-              <img src="{{ url_for('static', filename='images/products/clothes-3.jpg') }}" alt="Black Floral Wrap Midi Skirt" class="product-img default"
-                width="300">
-              <img src="{{ url_for('static', filename='images/products/clothes-4.jpg') }}" alt="Black Floral Wrap Midi Skirt" class="product-img hover"
-                width="300">
-          
-              <p class="showcase-badge angle pink">new</p>
-          
-              <div class="showcase-actions">
-                <button class="btn-action">
-                  <ion-icon name="heart-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="eye-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="repeat-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="bag-add-outline"></ion-icon>
-                </button>
-              </div>
-            </div>
-          
-            <div class="showcase-content">
-              <a href="#" class="showcase-category">skirt</a>
-          
-              <h3>
-                <a href="#" class="showcase-title">Black Floral Wrap Midi Skirt</a>
-              </h3>
-          
-              <div class="showcase-rating">
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-              </div>
-          
-              <div class="price-box">
-                <p class="price">$25.00</p>
-                <del>$35.00</del>
-              </div>
-          
-            </div>
-          
+          <div class="smart-field">
+            <label for="feature-user-image">Your photo for overlay (optional)</label>
+            <input id="feature-user-image" name="user_image" type="file" accept="image/*">
           </div>
 
-          <div class="showcase">
-          
-            <div class="showcase-banner">
-              <img src="{{ url_for('static', filename='images/products/shoe-2.jpg') }}" alt="Casual Men's Brown shoes" class="product-img default"
-                width="300">
-              <img src="{{ url_for('static', filename='images/products/shoe-2_1.jpg') }}" alt="Casual Men's Brown shoes" class="product-img hover"
-                width="300">
-          
-              <div class="showcase-actions">
-                <button class="btn-action">
-                  <ion-icon name="heart-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="eye-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="repeat-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="bag-add-outline"></ion-icon>
-                </button>
-              </div>
-            </div>
-          
-            <div class="showcase-content">
-              <a href="#" class="showcase-category">casual</a>
-          
-              <h3>
-                <a href="#" class="showcase-title">Casual Men's Brown shoes</a>
-              </h3>
-          
-              <div class="showcase-rating">
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-              </div>
-          
-              <div class="price-box">
-                <p class="price">$99.00</p>
-                <del>$105.00</del>
-              </div>
-          
-            </div>
-          
+          <button type="submit" id="feature-submit-btn" class="smart-submit-btn">✦ Generate My Look</button>
+        </form>
+
+        <div id="main-feature-status" class="smart-status" style="display: none;"></div>
+
+        <div id="main-feature-result" class="smart-result-card" style="display: none;">
+          <div class="smart-result-header smart-reveal">
+            <p id="feature-meta" class="smart-meta"></p>
           </div>
 
-          <div class="showcase">
-          
-            <div class="showcase-banner">
-              <img src="{{ url_for('static', filename='images/products/watch-3.jpg') }}" alt="Pocket Watch Leather Pouch" class="product-img default"
-                width="300">
-              <img src="{{ url_for('static', filename='images/products/watch-4.jpg') }}" alt="Pocket Watch Leather Pouch" class="product-img hover"
-                width="300">
-          
-              <p class="showcase-badge angle black">sale</p>
-          
-              <div class="showcase-actions">
-                <button class="btn-action">
-                  <ion-icon name="heart-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="eye-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="repeat-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="bag-add-outline"></ion-icon>
-                </button>
-              </div>
-            </div>
-          
-            <div class="showcase-content">
-              <a href="#" class="showcase-category">watches</a>
-          
-              <h3>
-                <a href="#" class="showcase-title">Pocket Watch Leather Pouch</a>
-              </h3>
-          
-              <div class="showcase-rating">
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-              </div>
-          
-              <div class="price-box">
-                <p class="price">$150.00</p>
-                <del>$170.00</del>
-              </div>
-          
-            </div>
-          
+          <div class="smart-content-grid smart-reveal">
+            <section class="smart-result-section">
+              <h4>Weather Suggestions</h4>
+              <ul id="feature-weather-list"></ul>
+            </section>
+
+            <section class="smart-result-section">
+              <h4>Style Recommendations</h4>
+              <ul id="feature-style-list"></ul>
+            </section>
+
+            <section class="smart-result-section">
+              <h4>Outfit Pairings</h4>
+              <ul id="feature-pairing-list"></ul>
+            </section>
           </div>
 
-          <div class="showcase">
-          
-            <div class="showcase-banner">
-              <img src="{{ url_for('static', filename='images/products/watch-1.jpg') }}" alt="Smart watche Vital Plus" class="product-img default"
-                width="300">
-              <img src="{{ url_for('static', filename='images/products/watch-2.jpg') }}" alt="Smart watche Vital Plus" class="product-img hover" width="300">
-          
-              <div class="showcase-actions">
-                <button class="btn-action">
-                  <ion-icon name="heart-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="eye-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="repeat-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="bag-add-outline"></ion-icon>
-                </button>
-              </div>
-            </div>
-          
-            <div class="showcase-content">
-              <a href="#" class="showcase-category">watches</a>
-          
-              <h3>
-                <a href="#" class="showcase-title">Smart watche Vital Plus</a>
-              </h3>
-          
-              <div class="showcase-rating">
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-              </div>
-          
-              <div class="price-box">
-                <p class="price">$100.00</p>
-                <del>$120.00</del>
-              </div>
-          
-            </div>
-          
-          </div>
+          <section class="smart-result-section smart-reveal">
+            <h4>Recommended Pieces</h4>
+            <div id="feature-gallery-grid" class="smart-gallery-grid"></div>
+          </section>
 
-          <div class="showcase">
-          
-            <div class="showcase-banner">
-              <img src="{{ url_for('static', filename='images/products/party-wear-1.jpg') }}" alt="Womens Party Wear Shoes" class="product-img default"
-                width="300">
-              <img src="{{ url_for('static', filename='images/products/party-wear-2.jpg') }}" alt="Womens Party Wear Shoes" class="product-img hover"
-                width="300">
-          
-              <p class="showcase-badge angle black">sale</p>
-          
-              <div class="showcase-actions">
-                <button class="btn-action">
-                  <ion-icon name="heart-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="eye-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="repeat-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="bag-add-outline"></ion-icon>
-                </button>
-              </div>
-            </div>
-          
-            <div class="showcase-content">
-              <a href="#" class="showcase-category">party wear</a>
-          
-              <h3>
-                <a href="#" class="showcase-title">Womens Party Wear Shoes</a>
-              </h3>
-          
-              <div class="showcase-rating">
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-              </div>
-          
-              <div class="price-box">
-                <p class="price">$25.00</p>
-                <del>$30.00</del>
-              </div>
-          
-            </div>
-          
-          </div>
+          <section id="feature-inspiration-section" class="smart-result-section smart-reveal" style="display: none;">
+            <h4>Web Inspiration</h4>
+            <div id="feature-inspiration-grid" class="smart-inspiration-grid"></div>
+          </section>
 
-          <div class="showcase">
-          
-            <div class="showcase-banner">
-              <img src="{{ url_for('static', filename='images/products/jacket-1.jpg') }}" alt="Mens Winter Leathers Jackets" class="product-img default"
-                width="300">
-              <img src="{{ url_for('static', filename='images/products/jacket-2.jpg') }}" alt="Mens Winter Leathers Jackets" class="product-img hover"
-                width="300">
-          
-              <div class="showcase-actions">
-                <button class="btn-action">
-                  <ion-icon name="heart-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="eye-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="repeat-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="bag-add-outline"></ion-icon>
-                </button>
-              </div>
-            </div>
-          
-            <div class="showcase-content">
-              <a href="#" class="showcase-category">jacket</a>
-          
-              <h3>
-                <a href="#" class="showcase-title">Mens Winter Leathers Jackets</a>
-              </h3>
-          
-              <div class="showcase-rating">
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-              </div>
-          
-              <div class="price-box">
-                <p class="price">$32.00</p>
-                <del>$45.00</del>
-              </div>
-          
-            </div>
-          
-          </div>
+          <section class="smart-result-section smart-reveal" id="smart-tryon-section">
+            <h4>Virtual Try-On</h4>
 
-          <div class="showcase">
-          
-            <div class="showcase-banner">
-              <img src="{{ url_for('static', filename='images/products/sports-2.jpg') }}" alt="Trekking & Running Shoes - black" class="product-img default"
-                width="300">
-              <img src="{{ url_for('static', filename='images/products/sports-4.jpg') }}" alt="Trekking & Running Shoes - black" class="product-img hover"
-                width="300">
-          
-              <p class="showcase-badge angle black">sale</p>
-          
-              <div class="showcase-actions">
-                <button class="btn-action">
-                  <ion-icon name="heart-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="eye-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="repeat-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="bag-add-outline"></ion-icon>
-                </button>
+            <div class="smart-scanner-panel" id="feature-scanner-panel">
+              <div class="smart-scanner-stage">
+                <div class="smart-scan-figure">
+                  <svg viewBox="0 0 72 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="36" cy="13" r="10" fill="rgba(212,175,55,0.15)" stroke="rgba(212,175,55,0.55)" stroke-width="1.4"/>
+                    <path d="M32 23 L32 30 L40 30 L40 23" stroke="rgba(212,175,55,0.4)" stroke-width="1" fill="rgba(212,175,55,0.08)"/>
+                    <path d="M14 36 Q16 30 32 30 L40 30 Q56 30 58 36 L64 58 L8 58 Z" fill="rgba(212,175,55,0.12)" stroke="rgba(212,175,55,0.45)" stroke-width="1.2"/>
+                    <path d="M14 58 L20 84 L52 84 L58 58 Z" fill="rgba(212,175,55,0.1)" stroke="rgba(212,175,55,0.35)" stroke-width="1"/>
+                    <path d="M14 36 L6 36 L2 70 L12 70 L16 50" fill="rgba(212,175,55,0.08)" stroke="rgba(212,175,55,0.35)" stroke-width="1"/>
+                    <path d="M58 36 L66 36 L70 70 L60 70 L56 50" fill="rgba(212,175,55,0.08)" stroke="rgba(212,175,55,0.35)" stroke-width="1"/>
+                    <path d="M20 84 L16 138 L30 138 L36 106 L42 138 L56 138 L52 84 Z" fill="rgba(212,175,55,0.08)" stroke="rgba(212,175,55,0.35)" stroke-width="1"/>
+                  </svg>
+                  <div class="smart-scan-line"></div>
+                  <div class="smart-scan-ring"></div>
+                </div>
+                <div class="smart-scan-progress">
+                  <div class="smart-scan-step" id="scan-step-1">Detecting body silhouette</div>
+                  <div class="smart-scan-step" id="scan-step-2">Mapping garment geometry</div>
+                  <div class="smart-scan-step" id="scan-step-3">Applying color palette</div>
+                  <div class="smart-scan-step" id="scan-step-4">Rendering outfit preview</div>
+                </div>
               </div>
             </div>
-          
-            <div class="showcase-content">
-              <a href="#" class="showcase-category">sports</a>
-          
-              <h3>
-                <a href="#" class="showcase-title">Trekking & Running Shoes - black</a>
-              </h3>
-          
-              <div class="showcase-rating">
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-              </div>
-          
-              <div class="price-box">
-                <p class="price">$58.00</p>
-                <del>$64.00</del>
-              </div>
-          
-            </div>
-          
-          </div>
 
-          <div class="showcase">
-          
-            <div class="showcase-banner">
-              <img src="{{ url_for('static', filename='images/products/shoe-1.jpg') }}" alt="Men's Leather Formal Wear shoes" class="product-img default"
-                width="300">
-              <img src="{{ url_for('static', filename='images/products/shoe-1_1.jpg') }}" alt="Men's Leather Formal Wear shoes" class="product-img hover"
-                width="300">
-          
-              <div class="showcase-actions">
-                <button class="btn-action">
-                  <ion-icon name="heart-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="eye-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="repeat-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="bag-add-outline"></ion-icon>
-                </button>
+            <div id="feature-tryon-result-panel" style="display: none;">
+              <p id="feature-tryon-note" class="smart-tryon-note"></p>
+              <div class="smart-tryon-grid">
+                <div class="smart-tryon-frame">
+                  <img id="feature-mannequin-image" src="" alt="Mannequin Preview" style="display: none;">
+                  <div id="feature-tryon-direction" class="smart-tryon-direction-card" style="display: none;"></div>
+                </div>
+                <div id="feature-overlay-wrap" style="display: none;">
+                  <img id="feature-overlay-image" src="" alt="Advanced Overlay Preview">
+                </div>
               </div>
             </div>
-          
-            <div class="showcase-content">
-              <a href="#" class="showcase-category">formal</a>
-          
-              <h3>
-                <a href="#" class="showcase-title">Men's Leather Formal Wear shoes</a>
-              </h3>
-          
-              <div class="showcase-rating">
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-              </div>
-          
-              <div class="price-box">
-                <p class="price">$50.00</p>
-                <del>$65.00</del>
-              </div>
-          
-            </div>
-          
-          </div>
+          </section>
 
-          <div class="showcase">
-          
-            <div class="showcase-banner">
-              <img src="{{ url_for('static', filename='images/products/shorts-1.jpg') }}" alt="Better Basics French Terry Sweatshorts"
-                class="product-img default" width="300">
-              <img src="{{ url_for('static', filename='images/products/shorts-2.jpg') }}" alt="Better Basics French Terry Sweatshorts"
-                class="product-img hover" width="300">
-          
-              <p class="showcase-badge angle black">sale</p>
-          
-              <div class="showcase-actions">
-                <button class="btn-action">
-                  <ion-icon name="heart-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="eye-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="repeat-outline"></ion-icon>
-                </button>
-          
-                <button class="btn-action">
-                  <ion-icon name="bag-add-outline"></ion-icon>
-                </button>
-              </div>
-            </div>
-          
-            <div class="showcase-content">
-              <a href="#" class="showcase-category">shorts</a>
-          
-              <h3>
-                <a href="#" class="showcase-title">Better Basics French Terry Sweatshorts</a>
-              </h3>
-          
-              <div class="showcase-rating">
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-                <ion-icon name="star-outline"></ion-icon>
-              </div>
-          
-              <div class="price-box">
-                <p class="price">$78.00</p>
-                <del>$85.00</del>
-              </div>
-          
-            </div>
-          
-          </div>
-
+          <section class="smart-result-actions smart-reveal">
+            <button type="button" id="feature-save-btn" class="smart-action-btn">Save Look</button>
+            <button type="button" id="feature-export-btn" class="smart-action-btn smart-action-btn-alt">Export JSON</button>
+            <button type="button" id="feature-presentation-btn" class="smart-action-btn smart-action-btn-gold">Download Card</button>
+          </section>
         </div>
 
+        <section id="feature-saved-section" class="smart-result-card smart-saved-block">
+          <p class="smart-meta">Saved Looks</p>
+          <div id="feature-saved-list" class="smart-saved-list"></div>
+        </section>
       </div>
     </nav>
 
