@@ -2,7 +2,10 @@
 __pycache__/
 *.py[cod]
 
-# Local virtual environment and runtime data
+# Local environment and runtime data
+.env
+.env.*
+!.env.example
 .venv/
 instance/
 app/static/uploads/virtual_try_on/

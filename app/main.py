@@ -416,18 +416,19 @@ class Login:
             return jsonify({"error": "Latitude and longitude are required"}), 400
 
         try:
-            # Fetch city using OpenWeatherMap Geocoding API
-            OPENWEATHERMAP_API_KEY = "" # Replace with your API key
-            geo_url = f"http://api.openweathermap.org/geo/1.0/reverse?lat={lat}&lon={lon}&limit=1&appid={OPENWEATHERMAP_API_KEY}"
-            geo_response = requests.get(geo_url).json()
+            api_key = (os.getenv("OPENWEATHERMAP_API_KEY") or "").strip()
+            if not api_key:
+                return jsonify({"error": "OpenWeatherMap API key is not configured."}), 500
+
+            geo_url = f"http://api.openweathermap.org/geo/1.0/reverse?lat={lat}&lon={lon}&limit=1&appid={api_key}"
+            geo_response = requests.get(geo_url, timeout=10).json()
 
             city = geo_response[0]["name"] if geo_response and len(geo_response) > 0 else "Unknown City"
 
-            # Determine the season
             month = datetime.now().month
-            if lat >= 0:  # Northern Hemisphere
+            if lat >= 0:
                 season = ["Winter", "Spring", "Summer", "Fall"][(month % 12) // 3]
-            else:  # Southern Hemisphere
+            else:
                 season = ["Summer", "Fall", "Winter", "Spring"][(month % 12) // 3]
 
             from app import globals
@@ -439,18 +440,19 @@ class Login:
 
     def get_location_manual(self, lat, lon):
         try:
-            # Fetch city using OpenWeatherMap Geocoding API
-            OPENWEATHERMAP_API_KEY = "" # Replace with your API key
-            geo_url = f"http://api.openweathermap.org/geo/1.0/reverse?lat={lat}&lon={lon}&limit=1&appid={OPENWEATHERMAP_API_KEY}"
-            geo_response = requests.get(geo_url).json()
+            api_key = (os.getenv("OPENWEATHERMAP_API_KEY") or "").strip()
+            if not api_key:
+                return {"city": "Unknown City", "season": "Unknown Season", "error": "OpenWeatherMap API key is not configured."}
+
+            geo_url = f"http://api.openweathermap.org/geo/1.0/reverse?lat={lat}&lon={lon}&limit=1&appid={api_key}"
+            geo_response = requests.get(geo_url, timeout=10).json()
 
             city = geo_response[0]["name"] if geo_response and len(geo_response) > 0 else "Unknown City"
 
-            # Determine the season
             month = datetime.now().month
-            if lat >= 0:  # Northern Hemisphere
+            if lat >= 0:
                 season = ["Winter", "Spring", "Summer", "Fall"][(month % 12) // 3]
-            else:  # Southern Hemisphere
+            else:
                 season = ["Summer", "Fall", "Winter", "Spring"][(month % 12) // 3]
 
             from app import globals
